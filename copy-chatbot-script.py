@@ -1,13 +1,23 @@
+#!/usr/bin/env python
+
 import sys
 import re
 
-print()
+
+if sys.version_info < (3, 6):
+    sys.exit("Python 3.6 required")
+
+
+def usage():
+    print("""
+    Usage: copy-chatbot-script [REQUEST FILE] [API TOKEN] [PROJECT PUBLIC KEY]""")
+
 
 try:
     print("Processing file:", sys.argv[1])
 except IndexError:
-    print("No file loaded :(\nExiting...")
-    sys.exit()
+    usage()
+    sys.exit(1)
 
 global request_to_process
 
@@ -27,7 +37,14 @@ def load_request_from_file(file):
 
 def replace_dbNodeId_nr_with_null(request):
     pattern = "(dbNodeId\\\"):(.*?),(\\\"id)"  # FIXME
-    print(request.count(pattern))
+    regex_pattern = "^[0-9a-f]{32}$"
+
+    # print(request.count(pattern))
+    print("Number of instances:")
+    print("-- dbNodeId:", request.count("dbNodeId\\\":"))
+    print("-- api_token:", request.count("api_token\\\":\\\""))
+    print("-- project_public_key:", request.count("project_public_key"))
+
 
 
 # start = request.find("dbNodeId\\\":") + len("dbNodeId\\\":")
