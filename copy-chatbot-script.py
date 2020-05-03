@@ -9,10 +9,19 @@ def usage():
   Usage: """, sys.argv[0], """[REQUEST FILE] [API TOKEN] [PROJECT PUBLIC KEY]""")
 
 
-def load_request_from_file(file):
-    with open(file, encoding="utf8") as f:
-        global request_to_process
-        request_to_process = f.read()
+class Ctx:
+    file = ''
+    request_to_process = None
+
+    def __init__(self, file, request):
+        self.file = file
+        self.request_to_process = request
+
+
+def load_request_from_file(ctx):
+    with open(ctx.file, encoding="utf8") as f:
+        # global request_to_process
+        ctx.request_to_process = f.read()
     # f = open(file, encoding="utf8")
     # if f.mode == "r":
     #   global request_to_process
@@ -39,13 +48,13 @@ def main():
         sys.exit("Python 3.6 required")
 
     try:
-        print("Processing file:", sys.argv[1])
+        ctx = Ctx(sys.argv[1], sys.argv[2])
+        print("Processing file:", ctx.file)
     except IndexError:
         usage()
         sys.exit(1)
 
-    global request_to_process
-
+    ctx = Ctx(sys.argv[1], sys.argv[2])
     # start = request.find("dbNodeId\\\":") + len("dbNodeId\\\":")
     # end = request.find("dbNodeId\\\":")
     # substring = request[start:end]
@@ -57,8 +66,8 @@ def main():
 
     # print(request.split("dbNodeId", 5)[1])
 
-    load_request_from_file(sys.argv[1])
-    replace_dbNodeId_nr_with_null(request_to_process)
+    load_request_from_file(ctx.file)
+    replace_dbNodeId_nr_with_null(ctx.request_to_process)
 
 
 if __name__ == "__main__":
