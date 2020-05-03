@@ -10,26 +10,25 @@ def usage():
 
 
 class Ctx:
-    file = ''
+    file = None
     request_to_process = None
 
     def __init__(self, file, request):
         self.file = file
         self.request_to_process = request
 
+    def __str__(self):
+        return 'File to open:', self.file, '\nRequest to process:', self.request_to_process
+
 
 def load_request_from_file(ctx):
-    with open(ctx.file, encoding="utf8") as f:
-        # global request_to_process
-        ctx.request_to_process = f.read()
-    # f = open(file, encoding="utf8")
-    # if f.mode == "r":
-    #   global request_to_process
-    #   request_to_process = f.read()
-    #   f.close()
-    # else:
-    #   print("Could not read this file :(\nExiting...")
-    #   sys.exit()
+    print("Loading request...")
+    try:
+        with open(ctx.file, encoding="utf8") as f:
+            ctx.request_to_process = f.read()
+    except FileNotFoundError:
+        print("Error loading a file!\nExiting...")
+        sys.exit(1)
 
 
 def replace_dbNodeId_nr_with_null(request):
@@ -48,13 +47,15 @@ def main():
         sys.exit("Python 3.6 required")
 
     try:
+        print('Creating context...')
         ctx = Ctx(sys.argv[1], sys.argv[2])
-        print("Processing file:", ctx.file)
     except IndexError:
         usage()
         sys.exit(1)
 
-    ctx = Ctx(sys.argv[1], sys.argv[2])
+    load_request_from_file(ctx)
+    # replace_dbNodeId_nr_with_null(ctx.request_to_process)
+
     # start = request.find("dbNodeId\\\":") + len("dbNodeId\\\":")
     # end = request.find("dbNodeId\\\":")
     # substring = request[start:end]
@@ -66,8 +67,6 @@ def main():
 
     # print(request.split("dbNodeId", 5)[1])
 
-    load_request_from_file(ctx.file)
-    replace_dbNodeId_nr_with_null(ctx.request_to_process)
 
 
 if __name__ == "__main__":
