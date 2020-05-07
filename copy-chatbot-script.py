@@ -1,5 +1,11 @@
 #!/usr/bin/env python
 
+"""
+    TODO:
+    1. replace api token
+    2. replace ppk
+"""
+
 import sys
 import re
 
@@ -12,8 +18,10 @@ def usage():
 class Ctx:
     request_file = None
     request_to_process = None
+    processed_request = None
     new_api_token = None
     new_ppk = None
+    ppk_and_api_pattern = "[a-zA-Z0-9]{32}"
 
     def __init__(self, request_file, api_token, ppk):
         self.request_file = request_file
@@ -34,7 +42,7 @@ def load_request_from_file(ctx):
         sys.exit(1)
 
 
-def replace_dbNodeId_nr_with_null(ctx):
+def replace_dbNodeId_with_null(ctx):
     pattern = "(dbNodeId\\\"):(.*?),(\\\"id)"  # FIXME
     regex_pattern = "^[0-9a-f]{32}$"
 
@@ -50,14 +58,25 @@ def replace_dbNodeId_nr_with_null(ctx):
 
 def replace_api_token(ctx):
     # TODO
-    ctx.request_to_process = re.sub('', '', ctx.request_to_process)
+    old_api_token = re.findall(ctx.ppk_and_api_pattern, ctx.request_to_process)[0]
+    # print('old api token:', old_api_token)
+    ctx.request_to_process = ctx.request_to_process.replace(old_api_token, ctx.new_api_token, 1)
 
 
 def replace_public_key(ctx):
     # TODO
-    old_ppk = 'project_public_key\":\"'
-    new_ppk = '_______'
-    ctx.request_to_process = re.sub(old_ppk, new_ppk, ctx.request_to_process)
+    # print('\nppk to replace:', ctx.request_to_process.count("^[a-zA-Z0-9]{32}$"))
+    ppk_to_replace = re.findall(ctx.ppk_and_api_pattern, ctx.request_to_process)[1]
+    print('ppk to replace:', ppk_to_replace)
+    # print('how many ppks:', len(re.findall(ctx.ppk_and_api_pattern, ctx.request_to_process)))
+    # ctx.request_to_process = re.sub('\"ml9izxoajvciiuhoagifniwpwocyyz4d\"', '', ctx.request_to_process)
+
+
+def print_request_to_file(ctx):
+    import time
+    fname = str(time.time()) + '_processed_request.txt'
+    with open(fname, 'x', encoding="utf-8") as f:
+        f.write(ctx.request_to_process)
 
 
 def main():
@@ -72,19 +91,18 @@ def main():
         sys.exit(1)
 
     load_request_from_file(ctx)
-    replace_dbNodeId_nr_with_null(ctx)
-    replace_api_token(ctx)
-    replace_public_key(ctx)
+    # replace_dbNodeId_with_null(ctx)
+    # replace_api_token(ctx)
+    # replace_public_key(ctx)
+    # print_request_to_file(ctx)
 
     # start = request.find("dbNodeId\\\":") + len("dbNodeId\\\":")
     # end = request.find("dbNodeId\\\":")
     # substring = request[start:end]
     # print(substring)
-
     # for item in request:
     #   substring = re.search(pattern, request).group(1)
     #   print(substring)
-
     # print(request.split("dbNodeId", 5)[1])
 
 
