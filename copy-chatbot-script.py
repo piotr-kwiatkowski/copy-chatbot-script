@@ -17,7 +17,7 @@ def usage():
 
 class Ctx:
     request_file = None
-    request_to_process = None
+    loaded_request = None
     processed_request = None
     new_api_token = None
     new_ppk = None
@@ -29,54 +29,59 @@ class Ctx:
         self.new_ppk = ppk
 
     def __str__(self):
-        return 'File to open:', self.request_file, '\nRequest to process:', self.request_to_process
+        return 'File to open:', self.request_file, '\nProcessed request:', self.processed_request
 
 
 def load_request_from_file(ctx):
-    print("Loading request...")
+    print("Loading request from file...")
     try:
         with open(ctx.request_file, encoding="utf8") as f:
-            ctx.request_to_process = f.read()
+            ctx.loaded_request = f.read()
     except FileNotFoundError:
-        print("Error loading a file!\nExiting...")
-        sys.exit(1)
+        sys.exit("Error loading a file!\nExiting...")
 
 
 def replace_dbNodeId_with_null(ctx):
+    # TODO
     pattern = "(dbNodeId\\\"):(.*?),(\\\"id)"  # FIXME
     regex_pattern = "^[0-9a-f]{32}$"
 
-    # TODO
-    ctx.request_to_process = re.sub('', '', ctx.request_to_process)
+    ctx.processed_request = re.sub('', '', ctx.loaded_request)
 
     # print(request.count(pattern))
     print("Number of instances:")
-    print("-- dbNodeId:", ctx.request_to_process.count("dbNodeId\\\":"))
-    print("-- api_token:", ctx.request_to_process.count("api_token\\\":\\\""))
-    print("-- project_public_key:", ctx.request_to_process.count("project_public_key"))
+    print("-- dbNodeId:", ctx.processed_request.count("dbNodeId\\\":"))
+    print("-- api_token:", ctx.processed_request.count("api_token\\\":\\\""))
+    print("-- project_public_key:", ctx.processed_request.count("project_public_key"))
 
 
 def replace_api_token(ctx):
-    # TODO
-    old_api_token = re.findall(ctx.ppk_and_api_pattern, ctx.request_to_process)[0]
-    # print('old api token:', old_api_token)
-    ctx.request_to_process = ctx.request_to_process.replace(old_api_token, ctx.new_api_token, 1)
+    try:
+        old_api_token = re.findall(ctx.ppk_and_api_pattern, ctx.processed_request)[0]
+    except TypeError:
+        sys.exit("Error processing request!\nExiting...")
+
+    ctx.processed_request = ctx.processed_request.replace(old_api_token, ctx.new_api_token, 1)
 
 
 def replace_public_key(ctx):
     # TODO
     # print('\nppk to replace:', ctx.request_to_process.count("^[a-zA-Z0-9]{32}$"))
-    ppk_to_replace = re.findall(ctx.ppk_and_api_pattern, ctx.request_to_process)[1]
+    ppk_to_replace = re.findall(ctx.ppk_and_api_pattern, ctx.processed_request)[1]
     print('ppk to replace:', ppk_to_replace)
-    # print('how many ppks:', len(re.findall(ctx.ppk_and_api_pattern, ctx.request_to_process)))
-    # ctx.request_to_process = re.sub('\"ml9izxoajvciiuhoagifniwpwocyyz4d\"', '', ctx.request_to_process)
+    # print('how many ppks:', len(re.findall(ctx.ppk_and_api_pattern, ctx.processed_request)))
+    # ctx.request_to_process = re.sub('\"ml9izxoajvciiuhoagifniwpwocyyz4d\"', '', ctx.processed_request)
 
 
 def print_request_to_file(ctx):
+    print("Printing to file...")
+    if ctx.processed_request is None:
+        exit("Processed request is None\nExiting...")
+
     import time
-    fname = str(time.time()) + '_processed_request.txt'
-    with open(fname, 'x', encoding="utf-8") as f:
-        f.write(ctx.request_to_process)
+    fpath = "logs/" + str(time.time()) + '_processed_request.txt'
+    with open(fpath, 'x', encoding="utf-8") as f:
+        f.write(ctx.processed_request)
 
 
 def main():
@@ -91,10 +96,11 @@ def main():
         sys.exit(1)
 
     load_request_from_file(ctx)
-    # replace_dbNodeId_with_null(ctx)
-    # replace_api_token(ctx)
+    replace_dbNodeId_with_null(ctx)
+    replace_api_token(ctx)
     # replace_public_key(ctx)
-    # print_request_to_file(ctx)
+    # replace_url(ctx)
+    print_request_to_file(ctx)
 
     # start = request.find("dbNodeId\\\":") + len("dbNodeId\\\":")
     # end = request.find("dbNodeId\\\":")
